@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalkulator Instalacji PV</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+        }
+
+        .calculator {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[readonly] {
+            background-color: #e9ecef;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0069d9;
+        }
+
+        .output-group {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>Kalkulator Instalacji PV</h2>
+
+        <label>Ilość paneli</label>
+        <input type="number" id="iloscPaneli" placeholder="Wpisz ilość paneli" min="1">
+
+        <label>Model falownika</label>
+        <select id="falownik">
+            <option value="100">Solplanet</option>
+            <option value="120">Sofar</option>
+            <option value="80">Encor</option>
+        </select>
+
+        <label>Rodzaj paneli</label>
+        <select id="panel">
+            <option value="480">Sunowa 480W</option>
+            <option value="445">Trina 445W</option>
+            <option value="580">Jolywood 580W</option>
+        </select>
+
+        <label>Rodzaj konstrukcji</label>
+        <select id="konstrukcja">
+            <option value="40">Dach płaski</option>
+            <option value="50">Grunt</option>
+            <option value="30">Dachówka</option>
+            <option value="25">Blachodachówka</option>
+            <option value="24">Trapez</option>
+        </select>
+
+        <label>Stawka VAT</label>
+        <select id="vat">
+            <option value="0.08">8%</option>
+            <option value="0.23">23%</option>
+        </select>
+
+        <label>Magazyn energii</label>
+        <select id="magazyn">
+            <option value="0">Nie</option>
+            <option value="7,56 kWh">7,56 kWh</option>
+            <option value="10,24 kWh">10,24 kWh</option>
+            <option value="12,8 kWh">12,8 kWh</option>
+            <option value="15,36 kWh">15,36 kWh</option>
+            <option value="17,92 kWh">17,92 kWh</option>
+            <option value="20,48 kWh">20,48 kWh</option>
+        </select>
+
+        <label>Prace dodatkowe (zł)</label>
+        <input type="number" id="praceDodatkowe" placeholder="np. 1000" min="0">
+
+        <div class="output-group">
+            <label>Moc instalacji (kW)</label>
+            <input type="text" id="mocInstalacji" readonly>
+        </div>
+
+        <div class="output-group">
+            <label>Wartość netto (zł)</label>
+            <input type="text" id="cenaNetto" readonly>
+        </div>
+
+        <div class="output-group">
+            <label>Wartość brutto (zł)</label>
+            <input type="text" id="cenaBrutto" readonly>
+        </div>
+
+        <button onclick="oblicz()">Oblicz</button>
+    </div>
+
+    <script>
+        function oblicz() {
+            const iloscPaneli = parseInt(document.getElementById("iloscPaneli").value);
+            const mocPanelu = parseInt(document.getElementById("panel").value);
+            const panelTyp = document.getElementById("panel").selectedOptions[0].text;
+            const cenaFalownika = parseFloat(document.getElementById("falownik").value);
+            const konstrukcjaSelect = document.getElementById("konstrukcja");
+            const konstrukcjaNazwa = konstrukcjaSelect.options[konstrukcjaSelect.selectedIndex].text;
+            const cenaKonstrukcji = parseFloat(konstrukcjaSelect.value);
+            const vat = parseFloat(document.getElementById("vat").value);
+            const magazynWartosc = document.getElementById("magazyn").selectedOptions[0].text.trim();
+            const praceDodatkowe = parseFloat(document.getElementById("praceDodatkowe").value) || 0;
+
+            if (isNaN(iloscPaneli) || iloscPaneli <= 3) {
+                alert("Podaj poprawną ilość paneli Minimum 4.");
+                return;
+            }
+
+            const mocKW = (iloscPaneli * mocPanelu) / 1000;
+
+            function getCena(progi) {
+                for (let i = 0; i < progi.length; i++) {
+                    if (mocKW <= progi[i].max) return progi[i].cena;
+                }
+                return progi[progi.length - 1].cena;
+            }
+
+            const cenniki = {
+                "Sunowa 480W": [
+                    { max: 3, cena: 6100 },
+                    { max: 4, cena: 5650 },
+                    { max: 5, cena: 5200 },
+                    { max: 6, cena: 4800 },
+                    { max: 7, cena: 4500 },
+                    { max: 8, cena: 4300 },
+                    { max: 9, cena: 4100 },
+                    { max: 10, cena: 3900 },
+                ],
+                "Trina 445W": [
+                    { max: 3, cena: 6200 },
+                    { max: 4, cena: 5750 },
+                    { max: 5, cena: 5300 },
+                    { max: 6, cena: 4900 },
+                    { max: 7, cena: 4600 },
+                    { max: 8, cena: 4400 },
+                    { max: 9, cena: 4200 },
+                    { max: 10, cena: 4000 },
+                ],
+                "Jolywood 580W": [
+                    { max: 3, cena: 6300 },
+                    { max: 4, cena: 5850 },
+                    { max: 5, cena: 5400 },
+                    { max: 6, cena: 5000 },
+                    { max: 7, cena: 4700 },
+                    { max: 8, cena: 4500 },
+                    { max: 9, cena: 4300 },
+                    { max: 10, cena: 4100 },
+                ],
+            };
+
+            if (!cenniki[panelTyp]) {
+                alert("Brak danych cenowych dla wybranego panelu.");
+                return;
+            }
+
+            let cenaZaKWP = getCena(cenniki[panelTyp]);
+
+            if (konstrukcjaNazwa.toLowerCase() === "grunt") {
+                cenaZaKWP += 200;
+            }
+
+            const cenaPaneli = cenaZaKWP * mocKW;
+
+            const cennikMagazyn = {
+                "7,56 kWh": 18500,
+                "10,24 kWh": 21500,
+                "12,8 kWh": 24500,
+                "15,36 kWh": 27500,
+                "17,92 kWh": 30500,
+                "20,48 kWh": 33500,
+            };
+
+            const cenaMagazynu = cennikMagazyn[magazynWartosc] || 0;
+
+            const sumaNetto = cenaPaneli + cenaFalownika + cenaKonstrukcji + cenaMagazynu + praceDodatkowe;
+            const sumaBrutto = sumaNetto * (1 + vat);
+
+            document.getElementById("mocInstalacji").value = mocKW.toFixed(2) + " kW";
+            document.getElementById("cenaNetto").value = sumaNetto.toFixed(2) + " zł";
+            document.getElementById("cenaBrutto").value = sumaBrutto.toFixed(2) + " zł";
+        }
+    </script>
+</body>
+</html>
